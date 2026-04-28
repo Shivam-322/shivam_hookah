@@ -1,0 +1,196 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-cormorant);
+  --font-heading: var(--font-cormorant);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ── Hookah Brand — always dark ─────────────────────────────────────────── */
+:root {
+  --background:          #0a0a0a;
+  --foreground:          #F5F5F5;
+  --card:                #111111;
+  --card-foreground:     #F5F5F5;
+  --popover:             #111111;
+  --popover-foreground:  #F5F5F5;
+  /* Gold primary */
+  --primary:             #C9A84C;
+  --primary-foreground:  #0a0a0a;
+  /* Subtle dark secondary */
+  --secondary:           #1a1a1a;
+  --secondary-foreground:#F5F5F5;
+  --muted:               #1a1a1a;
+  --muted-foreground:    #888888;
+  --accent:              #1a1a1a;
+  --accent-foreground:   #C9A84C;
+  --destructive:         #8B1A1A;
+  --border:              rgba(201, 168, 76, 0.2);
+  --input:               #1a1a1a;
+  --ring:                #C9A84C;
+  --chart-1: #C9A84C;
+  --chart-2: #8B1A1A;
+  --chart-3: #3a3a2a;
+  --chart-4: #2a2a1a;
+  --chart-5: #1a1a0a;
+  --radius: 0.25rem;
+  --sidebar:                 #111111;
+  --sidebar-foreground:      #F5F5F5;
+  --sidebar-primary:         #C9A84C;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent:          #1a1a1a;
+  --sidebar-accent-foreground: #C9A84C;
+  --sidebar-border:          rgba(201, 168, 76, 0.2);
+  --sidebar-ring:            #C9A84C;
+}
+
+/* Keep .dark identical so existing dark class works */
+.dark {
+  --background:          #0a0a0a;
+  --foreground:          #F5F5F5;
+  --card:                #111111;
+  --card-foreground:     #F5F5F5;
+  --popover:             #111111;
+  --popover-foreground:  #F5F5F5;
+  --primary:             #C9A84C;
+  --primary-foreground:  #0a0a0a;
+  --secondary:           #1a1a1a;
+  --secondary-foreground:#F5F5F5;
+  --muted:               #1a1a1a;
+  --muted-foreground:    #888888;
+  --accent:              #1a1a1a;
+  --accent-foreground:   #E8C96D;
+  --destructive:         #8B1A1A;
+  --border:              rgba(201, 168, 76, 0.2);
+  --input:               #1a1a1a;
+  --ring:                #C9A84C;
+  --chart-1: #C9A84C;
+  --chart-2: #8B1A1A;
+  --chart-3: #3a3a2a;
+  --chart-4: #2a2a1a;
+  --chart-5: #1a1a0a;
+  --sidebar:                 #111111;
+  --sidebar-foreground:      #F5F5F5;
+  --sidebar-primary:         #C9A84C;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent:          #1a1a1a;
+  --sidebar-accent-foreground: #C9A84C;
+  --sidebar-border:          rgba(201, 168, 76, 0.2);
+  --sidebar-ring:            #C9A84C;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-inter), sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-cormorant), Georgia, serif;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* ── Smoke / mist hero effect ────────────────────────────────────────────── */
+.smoke-overlay {
+  background: radial-gradient(ellipse 80% 60% at 50% 100%,
+    rgba(201,168,76,0.15) 0%,
+    transparent 70%),
+    linear-gradient(to bottom, rgba(10,10,10,0.1) 0%, rgba(10,10,10,0.95) 100%);
+  backdrop-filter: blur(0px);
+}
+
+/* Gold divider used on auth pages */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #888888;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 168, 76, 0.2);
+}
+
+@layer utilities {
+  .section-padding {
+    @apply py-16 lg:py-32;
+  }
+  .section-label {
+    @apply text-primary text-[11px] font-bold tracking-[0.2em] uppercase mb-4 block;
+  }
+  .section-label-hr {
+    @apply w-[60px] h-px bg-primary/40 mb-8;
+  }
+  .luxury-container {
+    @apply max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #0a0a0a;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 10px;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

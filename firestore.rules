@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: check if the requester is an authenticated admin ──────────
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == "prashant32064@gmail.com" ||
+        request.auth.token.email == "shivamhookahup70@gmail.com"
+      );
+    }
+
+    // ── users collection ──────────────────────────────────────────────────
+    // - Authenticated users can read and write ONLY their own document
+    // - Admin can read any user document
+    match /users/{userId} {
+      allow read:  if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && request.auth.uid == userId
+                   && !('isAdmin' in request.resource.data)
+                   && !('role' in request.resource.data)
+                   && request.resource.data.uid == userId;
+    }
+
+    // ── products collection ───────────────────────────────────────────────
+    // - Anyone (including unauthenticated) can read products (public catalog)
+    // - Only admin can create/update/delete products
+    match /products/{productId} {
+      allow read:   if true;
+      allow write:  if isAdmin();
+    }
+
+    // ── orders collection ─────────────────────────────────────────────────
+    // - Authenticated users can read ONLY their own orders
+    // - Orders are created from the server-side API route (/api/stripe/confirm-order)
+    //   which uses the client Firestore SDK after verifying Stripe payment server-side.
+    //   We allow authenticated users to create orders; real security is Stripe verification in the API.
+    // - Only admin can update (status changes) or delete orders
+    match /orders/{orderId} {
+      allow read:   if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if false; // Only backend API uses adminDb to create orders
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ── Catch-all Deny ────────────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
