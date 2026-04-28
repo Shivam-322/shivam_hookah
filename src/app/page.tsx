@@ -11,7 +11,7 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out scale-110 lg:scale-100"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?q=80&w=2000&auto=format&fit=crop')",
+              "url('https://www.hookah-filters.com/wp-content/uploads/Hookah-without-tobacco-UK.jpg')",
           }}
           data-aos="zoom-out"
           data-aos-duration="2000"

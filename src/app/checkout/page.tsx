@@ -247,6 +247,13 @@ export default function CheckoutPage() {
 
   return (
     <div className="luxury-container section-padding min-h-screen px-4 sm:px-6 lg:px-8">
+      {/* Policy Strip */}
+      <div className="w-full bg-red-900/20 border border-red-500/20 rounded-sm p-4 mb-8 text-center" data-aos="fade-down">
+        <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-red-500 font-bold">
+          ⚠️ Important: No Replacement / Return Policy ⚠️
+        </p>
+      </div>
+
       <div className="flex flex-col items-start mb-10 sm:mb-12" data-aos="fade-up">
         <span className="section-label">Safe & Secure</span>
         <div className="section-label-hr"></div>

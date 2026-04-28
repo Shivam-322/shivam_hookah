@@ -12,7 +12,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-04-22.dahlia',
+  apiVersion: '2026-04-22.dahlia' as any,
 });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
