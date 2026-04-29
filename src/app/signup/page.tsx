@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 /** Firebase error code → user-friendly message */
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
@@ -68,6 +69,13 @@ function SignupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/";
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push(redirect);
+    }
+  }, [user, authLoading, router, redirect]);
 
   /** Google Sign-In — popup flow */
   const handleGoogleSignIn = async () => {
@@ -247,7 +255,7 @@ function SignupContent() {
         <div className="text-center text-[10px] sm:text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
           Already a member?{" "}
           <Link
-            href={`/login?redirect=${redirect}`}
+            href={`/login?redirect=${encodeURIComponent(redirect)}`}
             className="text-primary hover:underline font-bold"
           >
             Sign in

@@ -266,7 +266,7 @@ export default function CheckoutPage() {
         {/* Main form column */}
         <div className="space-y-8 sm:space-y-10 order-2 lg:order-1" data-aos="fade-right">
           {step === "address" ? (
-            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm">
+            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-lg sm:text-xl font-bold tracking-[0.1em] font-serif text-primary uppercase mb-6 sm:mb-8 border-b border-primary/10 pb-4">
                 Delivery Details
               </h2>
@@ -309,7 +309,7 @@ export default function CheckoutPage() {
               </form>
             </div>
           ) : (
-            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm">
+            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex items-center justify-between mb-8 border-b border-primary/10 pb-4">
                 <h2 className="text-lg sm:text-xl font-bold tracking-[0.1em] font-serif text-primary uppercase">Secure Payment</h2>
                 <button type="button" onClick={() => setStep("address")} className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors font-bold">← Back</button>

@@ -139,7 +139,7 @@ async function handlePaymentSuccess(intent: Stripe.PaymentIntent) {
   // Send confirmation email
   try {
     await resend.emails.send({
-      from: process.env.RESEND_FROM_EMAIL || 'Haze & Co. <onboarding@resend.dev>',
+      from: 'Shivam Hookah <orders@shivamhookah.in>',
       to: orderData.userEmail,
       subject: `Order Confirmed — #${docRef.id}`,
       html: buildEmailTemplate(orderData, docRef.id),
@@ -195,7 +195,7 @@ function buildEmailTemplate(order: any, orderId: string): string {
         Phone: ${escapeHtml(order.shippingAddress.phone)}
       </p>
       <p style="color: #666; font-size: 12px;">
-        Thank you for shopping with Haze & Co.
+        Thank you for shopping with Shivam Hookah
       </p>
     </div>
   `;

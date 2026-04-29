@@ -8,7 +8,7 @@ export default function Home() {
       <section className="relative w-full min-h-[100vh] lg:h-[100vh] overflow-hidden flex items-center justify-center py-24 lg:py-0">
         {/* Background image with parallax */}
         <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 ease-out scale-110 lg:scale-100"
+          className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
               "url('https://www.hookah-filters.com/wp-content/uploads/Hookah-without-tobacco-UK.jpg')",

@@ -10,10 +10,11 @@ import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, getTotal } = useCartStore();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
 
   const handleCheckout = () => {
+    if (authLoading) return; // Prevent action while auth is still resolving
     if (user) {
       router.push("/checkout");
     } else {

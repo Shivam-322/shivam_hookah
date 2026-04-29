@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AosProvider } from "@/components/AosProvider";
+import WhatsAppBubble from "@/components/WhatsAppBubble";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -41,6 +42,7 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
             <Footer />
             <Toaster position="top-center" richColors />
+            <WhatsAppBubble />
           </AosProvider>
         </AuthProvider>
       </body>

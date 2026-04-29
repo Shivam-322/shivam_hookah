@@ -47,6 +47,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-whatsapp-ping: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
 /* ── Hookah Brand — always dark ─────────────────────────────────────────── */

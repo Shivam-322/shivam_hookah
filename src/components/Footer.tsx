@@ -25,8 +25,8 @@ export default function Footer() {
             <Link href="/cart" className="hover:text-primary transition-colors duration-300">
               Cart
             </Link>
-            <Link href="/login" className="hover:text-primary transition-colors duration-300">
-              Contact
+            <Link href="/catalog" className="hover:text-primary transition-colors duration-300">
+              Catalog
             </Link>
           </nav>
           
