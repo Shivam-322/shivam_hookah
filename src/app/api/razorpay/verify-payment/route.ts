@@ -62,19 +62,25 @@ export async function POST(req: NextRequest) {
 
   console.log('[verify-payment] Signature verified for:', razorpayPaymentId);
 
-  // Step 4 — Check for duplicate order using nested field (replay attack prevention)
+  // Step 4 — Idempotency Check (Anti-Tampering & Duplicate Prevention)
+  console.log('[verify-payment] Checking idempotency for:', razorpayOrderId);
+  
   const existing = await adminDb.collection('orders')
-    .where('payment.razorpayPaymentId', '==', razorpayPaymentId)
+    .where('payment.razorpayOrderId', '==', razorpayOrderId)
+    .where('payment.status', '==', 'paid')
     .get();
 
   if (!existing.empty) {
-    console.log('[verify-payment] Duplicate payment detected:', razorpayPaymentId);
+    console.log('[verify-payment] ⚠️ Idempotency Triggered: Order already processed:', razorpayOrderId);
     return NextResponse.json({
       success: true,
       orderId: existing.docs[0].id,
       duplicate: true,
     });
   }
+
+  console.log('[verify-payment] Proceeding with order creation for:', razorpayOrderId);
+
 
   // Step 5 — Verify items from Firestore (server-side price verification)
   const verifiedItems: any[] = items || [];

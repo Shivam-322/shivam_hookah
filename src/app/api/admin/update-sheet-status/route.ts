@@ -14,12 +14,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const decoded = await adminAuth.verifyIdToken(token);
-    const adminEmails = [
-      process.env.NEXT_PUBLIC_ADMIN_EMAIL_1,
-      process.env.NEXT_PUBLIC_ADMIN_EMAIL_2,
-    ];
-    if (!adminEmails.includes(decoded.email)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (!decoded.admin) {
+      console.error('[admin] Unauthorized access attempt by:', decoded.email);
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
   } catch {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });

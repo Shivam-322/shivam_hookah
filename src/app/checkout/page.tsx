@@ -151,8 +151,9 @@ export default function CheckoutPage() {
 
         // Payment SUCCESS handler
         handler: async (response: any) => {
-          console.log('[razorpay] Payment successful:', response);
+          // console.log('[razorpay] Payment successful');
           toast.loading('Confirming your order...', { id: 'confirm' });
+
 
           try {
             const freshToken = await user.getIdToken();
@@ -187,7 +188,8 @@ export default function CheckoutPage() {
             router.push(`/order-success?orderId=${verifyData.orderId}`);
 
           } catch (err) {
-            console.error('[razorpay] Verification failed:', err);
+            // console.error('[razorpay] Verification failed');
+
             toast.error('Payment received but order confirmation failed. Contact support.',
               { id: 'confirm' });
             setIsLoading(false);
@@ -197,7 +199,8 @@ export default function CheckoutPage() {
         // Payment FAILURE handler  
         modal: {
           ondismiss: () => {
-            console.log('[razorpay] Payment modal dismissed');
+            // console.log('[razorpay] Payment modal dismissed');
+
             toast.info('Payment cancelled');
             setIsLoading(false);
           },
@@ -207,7 +210,8 @@ export default function CheckoutPage() {
       const razorpayInstance = new (window as any).Razorpay(options);
 
       razorpayInstance.on('payment.failed', (response: any) => {
-        console.error('[razorpay] Payment failed:', response.error);
+        // console.error('[razorpay] Payment failed');
+
         toast.error(`Payment failed: ${response.error.description}`);
         setIsLoading(false);
       });
@@ -215,7 +219,8 @@ export default function CheckoutPage() {
       razorpayInstance.open();
 
     } catch (err) {
-      console.error('[razorpay] Checkout error:', err);
+      // console.error('[razorpay] Checkout error');
+
       toast.error('Something went wrong. Please try again.');
       setIsLoading(false);
     }

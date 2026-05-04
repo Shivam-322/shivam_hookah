@@ -23,7 +23,7 @@ function SuccessContent() {
           setRazorpayPaymentId(orderDoc.data().payment?.razorpayPaymentId || null);
         }
       } catch (err) {
-        console.error("Failed to fetch order", err);
+        // console.error("Failed to fetch order");
       }
     }
     fetchOrder();

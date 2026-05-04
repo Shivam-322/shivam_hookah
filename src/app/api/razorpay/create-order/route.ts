@@ -6,12 +6,12 @@ import crypto from 'crypto';
 
 export const runtime = 'nodejs';
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
-
 export async function POST(req: NextRequest) {
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID!,
+    key_secret: process.env.RAZORPAY_KEY_SECRET!,
+  });
+
   // Step 1 — Verify Firebase auth token
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.split('Bearer ')[1];
@@ -49,6 +49,9 @@ export async function POST(req: NextRequest) {
   // NEVER trust prices from the client
   let total = 0;
   const verifiedItems: any[] = [];
+
+  console.log('[create-order] Starting price verification for:', decodedToken.email);
+
 
   try {
     for (const item of items) {
@@ -96,9 +99,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  console.log(`[create-order] Verification complete. Total: ₹${total} for ${verifiedItems.length} items.`);
+
   // Step 4 — Create Razorpay order
+
   // Amount must be in paise (1 INR = 100 paise)
   try {
+    console.log('[create-order] Razorpay payload:', {
+      amount: Math.round(total * 100),
+      currency: 'INR',
+      receipt: `order_${Date.now()}`,
+    });
+
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(total * 100), // paise
       currency: 'INR',
@@ -117,7 +129,8 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log('[create-order] Razorpay order created:', razorpayOrder.id);
+    console.log('[create-order] ✅ Razorpay Order Created:', razorpayOrder.id);
+
 
     return NextResponse.json({
       success: true,
