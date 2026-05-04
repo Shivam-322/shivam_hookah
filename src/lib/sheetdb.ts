@@ -1,54 +1,109 @@
-export async function logOrderToSheetDB(order: any) {
-  const SHEETDB_URL = process.env.SHEETDB_API_URL;
+const SHEETDB_API_URL = process.env.SHEETDB_API_URL || '';
 
-  if (!SHEETDB_URL) {
-    console.warn("[SheetDB] API URL not found in environment variables. Skipping logging.");
-    return;
-  }
+class SheetDBService {
 
-  try {
-    // Flattening shipping address
-    const address = order.shippingAddress;
-    const flattenedAddress = `${address.line1}, ${address.city}, ${address.state}, ${address.pincode}`;
-
-    // Flattening items array
-    const itemsList = order.items
-      .map((item: any) => `${item.quantity}x ${item.name}${item.color ? ` (${item.color})` : ""}`)
-      .join(", ");
-
-    const payload = {
-      data: [
-        {
-          createdAt: order.createdAt,
-          orderId: order.stripePaymentIntentId || "N/A",
-          userId: order.userId,
-          userName: order.userName,
-          userEmail: order.userEmail,
-          phone: address.phone || "N/A",
-          address: flattenedAddress,
-          items: itemsList,
-          total: order.total,
-          status: order.status,
-        },
-      ],
+  async addOrder(order: {
+    orderId: string;
+    createdAt: string;
+    userName: string;
+    userEmail: string;
+    phone: string;
+    total: number;
+    razorpayPaymentId: string;
+    items: Array<{ name: string; quantity: number; price: number }>;
+    shippingAddress: {
+      line1: string;
+      city: string;
+      state: string;
+      pincode: string;
     };
-
-    const response = await fetch(SHEETDB_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`SheetDB Error: ${response.status} - ${errorText}`);
+  }): Promise<void> {
+    if (!SHEETDB_API_URL) {
+      console.warn('[sheetdb] API URL not set — skipping');
+      return;
     }
 
-    console.log("[SheetDB] Order successfully logged to Google Sheet.");
-  } catch (error) {
-    console.error("[SheetDB] Failed to log order:", error);
-    // We don't throw the error because we don't want to break the main order flow
+    const itemsString = order.items
+      .map(i => `${i.name} x${i.quantity} @₹${i.price}`)
+      .join(' | ');
+
+    const row = {
+      'Order ID': order.orderId,
+      'Date': new Date(order.createdAt).toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      'Customer Name': order.userName,
+      'Customer Email': order.userEmail,
+      'Phone': order.phone,
+      'Total (INR)': `₹${order.total.toFixed(2)}`,
+      'Payment ID': order.razorpayPaymentId,
+      'Items': itemsString,
+      'Shipping Address': order.shippingAddress.line1,
+      'City': order.shippingAddress.city,
+      'State': order.shippingAddress.state,
+      'Pincode': order.shippingAddress.pincode,
+      'Order Status': 'Confirmed',
+      'Shiprocket ID': '',
+      'AWB': '',
+      'Courier': '',
+      'Shipping Status': 'Pending',
+      'Label URL': '',
+    };
+
+    const res = await fetch(SHEETDB_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [row] }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`SheetDB POST failed: ${await res.text()}`);
+    }
+
+    console.log('[sheetdb] ✅ Order added to sheets:', order.orderId);
+  }
+
+  async updateOrderStatus(
+    orderId: string,
+    updates: {
+      orderStatus?: string;
+      shiprocketId?: string;
+      awb?: string;
+      courier?: string;
+      shippingStatus?: string;
+      labelUrl?: string;
+    }
+  ): Promise<void> {
+    if (!SHEETDB_API_URL) return;
+
+    const updateData: Record<string, string> = {};
+    if (updates.orderStatus) updateData['Order Status'] = updates.orderStatus;
+    if (updates.shiprocketId) updateData['Shiprocket ID'] = updates.shiprocketId;
+    if (updates.awb) updateData['AWB'] = updates.awb;
+    if (updates.courier) updateData['Courier'] = updates.courier;
+    if (updates.shippingStatus) updateData['Shipping Status'] = updates.shippingStatus;
+    if (updates.labelUrl) updateData['Label URL'] = updates.labelUrl;
+
+    const res = await fetch(
+      `${SHEETDB_API_URL}/Order ID/${encodeURIComponent(orderId)}`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updateData }),
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(`SheetDB PATCH failed: ${await res.text()}`);
+    }
+
+    console.log('[sheetdb] ✅ Order updated in sheets:', orderId);
   }
 }
+
+export const sheetdb = new SheetDBService();

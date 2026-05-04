@@ -3,13 +3,31 @@
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  // Support both ?orderId= (new Stripe flow) and legacy ?id= param
-  const orderId = searchParams.get("orderId") || searchParams.get("id");
+  const orderId = searchParams.get("orderId");
+  const [razorpayPaymentId, setRazorpayPaymentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchOrder() {
+      if (!orderId) return;
+      try {
+        const orderDoc = await getDoc(doc(db, "orders", orderId));
+        if (orderDoc.exists()) {
+          // Use nested payment field
+          setRazorpayPaymentId(orderDoc.data().payment?.razorpayPaymentId || null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch order", err);
+      }
+    }
+    fetchOrder();
+  }, [orderId]);
 
   return (
     <div className="luxury-container section-padding min-h-[80vh] flex items-center justify-center px-4">
@@ -32,8 +50,14 @@ function SuccessContent() {
 
         {orderId && (
           <div className="bg-[#111111] p-4 sm:p-6 border border-primary/10 rounded-sm inline-block w-full sm:w-auto">
-            <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Transaction ID</p>
+            <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Order ID</p>
             <p className="text-primary font-mono text-xs sm:text-sm tracking-widest break-all px-2">{orderId}</p>
+            {razorpayPaymentId && (
+              <>
+                <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 mt-4">Payment ID</p>
+                <p className="text-primary font-mono text-xs sm:text-sm tracking-widest break-all px-2">{razorpayPaymentId}</p>
+              </>
+            )}
           </div>
         )}
 

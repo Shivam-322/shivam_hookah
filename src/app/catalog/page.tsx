@@ -50,7 +50,7 @@ function CatalogContent() {
 
   return (
     <div className="luxury-container section-padding min-h-screen px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col items-start mb-8 sm:mb-12" data-aos="fade-up">
+      <div className="flex flex-col items-start mb-8 sm:mb-12" data-aos="fade-up" suppressHydrationWarning>
         <span className="section-label">Our Collection</span>
         <div className="section-label-hr"></div>
         <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-[0.05em] text-[#F5F5F5] font-serif mt-2 sm:mt-4 break-words w-full">
@@ -58,7 +58,7 @@ function CatalogContent() {
         </h1>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 mb-8 sm:mb-12 items-start lg:items-center justify-between" data-aos="fade-up" data-aos-delay="100">
+      <div className="flex flex-col lg:flex-row gap-6 mb-8 sm:mb-12 items-start lg:items-center justify-between" data-aos="fade-up" data-aos-delay="100" suppressHydrationWarning>
         <div className="relative w-full lg:max-w-md group">
           <Input
             placeholder="Search flavors, hookahs..."
@@ -107,8 +107,8 @@ function CatalogContent() {
       ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {filteredProducts.map((product, idx) => (
-            <div key={product.id} data-aos="fade-up" data-aos-delay={idx % 4 * 100}>
-              <ProductCard product={product} />
+            <div key={product.id} data-aos="fade-up" data-aos-delay={idx % 4 * 100} suppressHydrationWarning>
+              <ProductCard product={product} priority={idx === 0} />
             </div>
           ))}
         </div>

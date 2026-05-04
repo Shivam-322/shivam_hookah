@@ -2,50 +2,48 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc, query, orderBy } from "firebase/firestore";
+import { collection, doc, updateDoc, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
+import { Order } from "@/types/index";
+import OrderStatusBadge from "@/components/admin/OrderStatusBadge";
+import { useAuth } from "@/context/AuthContext";
 
 export default function AdminOrdersPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrders = async () => {
-    try {
-      const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const ordersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setOrders(ordersData);
-    } catch (error) {
-      toast.error("Failed to fetch orders");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchOrders();
+    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Order[];
+      setOrders(data);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching orders:", error);
+      toast.error("Failed to fetch orders");
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      await updateDoc(doc(db, "orders", id), { status: newStatus });
+      await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+      if (user) {
+        const token = await user.getIdToken();
+        fetch('/api/admin/update-sheet-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ orderId, status: newStatus }),
+        }).catch(() => {});
+      }
       toast.success("Order status updated");
-      setOrders(orders.map(o => o.id === id ? { ...o, status: newStatus } : o));
-    } catch (error) {
+    } catch {
       toast.error("Failed to update status");
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case "confirmed": return "bg-blue-500 hover:bg-blue-600 text-white";
-      case "shipped": return "bg-orange-500 hover:bg-orange-600 text-white";
-      case "delivered": return "bg-green-500 hover:bg-green-600 text-white";
-      default: return "bg-gray-500 text-white";
     }
   };
 
@@ -73,37 +71,40 @@ export default function AdminOrdersPage() {
               </TableRow>
             ) : (
               orders.map((order) => (
-                <TableRow 
-                  key={order.id} 
-                  className="hover:bg-white/5 cursor-pointer transition-colors border-b border-border/20 group"
-                  onClick={() => router.push(`/admin/orders/${order.id}`)}
-                >
+                <TableRow key={order.id} className="hover:bg-white/5 cursor-pointer transition-colors border-b border-border/20 group" onClick={() => router.push(`/admin/orders/${order.id}`)}>
                   <TableCell className="font-medium text-amber-500 group-hover:text-amber-400 transition-colors">#{order.id}</TableCell>
                   <TableCell className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex flex-col">
                       <span className="font-medium text-white text-sm">{order.userEmail}</span>
-                      <span className="text-[10px] text-muted-foreground mt-1 line-clamp-1 max-w-[200px] uppercase tracking-tighter" title={typeof order.shippingAddress === 'string' ? order.shippingAddress : `${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}>
-                        {typeof order.shippingAddress === 'string' ? order.shippingAddress : `${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}
+                      <span className="text-[10px] text-muted-foreground mt-1 line-clamp-1 max-w-[200px] uppercase tracking-tighter" title={`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}>
+                        {`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="font-bold text-white">₹{order.total.toLocaleString("en-IN")}</TableCell>
+                  <TableCell className="font-bold text-white">₹{order.total?.toLocaleString("en-IN")}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={`${getStatusColor(order.status)} border-none text-[9px] px-2 py-0.5 font-bold tracking-widest`}>
-                      {order.status.toUpperCase()}
-                    </Badge>
+                    <OrderStatusBadge
+                      status={order.status}
+                      shippingStatus={order.shiprocket?.status || undefined}
+                      shippingStatusLabel={order.shiprocket?.statusLabel || undefined}
+                      awb={order.shiprocket?.awb || undefined}
+                      courierName={order.shiprocket?.courierName || undefined}
+                    />
+                    <div className="mt-1 space-y-0.5">
+                      {order.shiprocket?.awb && (
+                        <p className="text-xs text-gray-400 font-mono mt-1">📦 {order.shiprocket.courierName} · {order.shiprocket.awb}</p>
+                      )}
+                      {order.shiprocket?.status === 'shiprocket_failed' && (
+                        <p className="text-xs text-red-400 mt-1">⚠️ Shiprocket failed</p>
+                      )}
+                      {!order.shiprocket?.orderId && order.shiprocket?.status !== 'shiprocket_failed' && order.status === 'confirmed' && (
+                        <p className="text-xs text-yellow-400 mt-1">⏳ Creating shipment...</p>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <select 
-                      className="bg-black border border-border/50 rounded-sm px-2 py-1 text-[11px] outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer text-white uppercase tracking-wider font-bold"
-                      value={order.status}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        handleStatusChange(order.id, e.target.value);
-                      }}
-                    >
+                    <select className="bg-black border border-border/50 rounded-sm px-2 py-1 text-[11px] outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer text-white uppercase tracking-wider font-bold" value={order.status} onClick={(e) => e.stopPropagation()} onChange={(e) => { e.stopPropagation(); handleStatusChange(order.id!, e.target.value); }}>
                       <option value="confirmed">Confirmed</option>
                       <option value="shipped">Shipped</option>
                       <option value="delivered">Delivered</option>

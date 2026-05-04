@@ -1,161 +1,46 @@
-"use client";
+'use client';
 
-import { useCartStore } from "@/store/useCartStore";
-import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useCartStore } from '@/store/useCartStore';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import Image from "next/image";
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+// Load Razorpay script dynamically
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && (window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
 
-const stripeAppearance = {
-  theme: "night" as const,
-  variables: {
-    colorPrimary: "#C9A84C",
-    colorBackground: "#111111",
-    colorText: "#F5F5F5",
-    colorDanger: "#ff4444",
-    fontFamily: "Inter, sans-serif",
-    borderRadius: "2px",
-  },
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Inner payment form — rendered inside <Elements> provider
-// ─────────────────────────────────────────────────────────────────────────────
-interface PaymentFormProps {
-  name: string;
-  address: string;
-  phone: string;
-  total: number;
-  userId: string;
-  userEmail: string;
-  onSuccess: (orderId: string) => void;
-}
-
-function StripePaymentForm({
-  name,
-  address,
-  phone,
-  total,
-  userId,
-  userEmail,
-  onSuccess,
-}: PaymentFormProps) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [paying, setPaying] = useState(false);
-  const [stripeReady, setStripeReady] = useState(false);
-  const { items, clearCart } = useCartStore();
-
-  const handleConfirm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements || !stripeReady) return;
-
-    setPaying(true);
-    try {
-      const { error: submitError } = await elements.submit();
-      if (submitError) {
-        toast.error(submitError.message || "Failed to submit payment form.");
-        setPaying(false);
-        return;
-      }
-
-      const { error: stripeError, paymentIntent } =
-        await stripe.confirmPayment({
-          elements,
-          redirect: "if_required",
-        });
-
-      if (stripeError) {
-        toast.error(stripeError.message || "Payment failed. Please try again.");
-        setPaying(false);
-        return;
-      }
-
-      if (!paymentIntent || paymentIntent.status !== "succeeded") {
-        toast.error("Payment incomplete. Please try again.");
-        setPaying(false);
-        return;
-      }
-
-      toast.success("Payment successful! Confirming your order...");
-      clearCart();
-      onSuccess(paymentIntent.id);
-    } catch (error: any) {
-      console.error("Payment confirmation error:", error);
-      toast.error(error.message || "Something went wrong. Please try again.");
-      setPaying(false);
-    }
-  };
-
-  return (
-    <form onSubmit={handleConfirm} className="space-y-6">
-      <div className="bg-black/40 border border-primary/10 rounded-sm p-4 sm:p-6 shadow-inner overflow-hidden">
-        <PaymentElement
-          onReady={() => setStripeReady(true)}
-          options={{
-            layout: "tabs",
-          }}
-        />
-      </div>
-      <Button
-        type="submit"
-        disabled={!stripe || !elements || !stripeReady || paying}
-        className={`w-full font-bold text-[11px] sm:text-[12px] tracking-[0.2em] h-14 sm:h-16 uppercase shadow-[0_10px_30px_rgba(201,168,76,0.15)] hover:shadow-[0_15px_40px_rgba(201,168,76,0.25)] transition-all ${!stripeReady ? 'opacity-50' : ''}`}
-      >
-        {!stripeReady ? (
-          "Securing Connection..."
-        ) : paying ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          `Authorize ₹${total.toLocaleString("en-IN")}`
-        )}
-      </Button>
-      <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center uppercase tracking-[0.1em]">
-        🔒 Secure Encrypted Transaction — Verified by Stripe
-      </p>
-    </form>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main checkout page
-// ─────────────────────────────────────────────────────────────────────────────
 export default function CheckoutPage() {
-  const { items, getTotal } = useCartStore();
   const { user, loading: authLoading } = useAuth();
+  const { items, clearCart, getTotal } = useCartStore();
   const router = useRouter();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [line1, setLine1] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [pincode, setPincode] = useState("");
-
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [intentLoading, setIntentLoading] = useState(false);
-  const [step, setStep] = useState<"address" | "payment">("address");
+  const [isLoading, setIsLoading] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState({
+    name: '',
+    phone: '',
+    line1: '',
+    city: '',
+    state: '',
+    pincode: '',
+  });
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -163,79 +48,178 @@ export default function CheckoutPage() {
     }
   }, [user, authLoading, router]);
 
+  // Pre-fill from user profile if available
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      if (user) {
-        setEmail(user.email || "");
-        try {
-          const docRef = doc(db, "users", user.uid);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            const data = docSnap.data();
-            setName(data.name || "");
-            setPhone(data.phone || "");
-            setLine1(data.address || "");
-            setCity(data.city || "");
-            setState(data.state || "");
-            setPincode(data.pincode || "");
-          }
-        } catch (error) {
-          console.error("Error fetching user data", error);
-        }
-      }
-    };
-    fetchUserProfile();
+    if (user?.displayName) {
+      setShippingAddress(prev => ({ ...prev, name: user.displayName || '' }));
+    }
   }, [user]);
 
-  const handleProceedToPayment = async (e: React.FormEvent) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setShippingAddress((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (items.length === 0) {
-      toast.error("Your cart is empty");
+
+    if (!user) {
+      toast.error('Please login to continue');
+      router.push('/login');
       return;
     }
 
-    setIntentLoading(true);
-    try {
-      const token = await user?.getIdToken();
-      if (!token) throw new Error("Authentication error");
+    // Validate shipping address
+    const required = ['name', 'phone', 'line1', 'city', 'state', 'pincode'];
+    for (const field of required) {
+      if (!shippingAddress[field as keyof typeof shippingAddress]?.trim()) {
+        toast.error(`Please enter your ${field}`);
+        return;
+      }
+    }
 
-      const res = await fetch("/api/stripe/create-payment-intent", {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+    if (items.length === 0) {
+      toast.error('Your cart is empty');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Step 1 — Load Razorpay script
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast.error('Failed to load payment gateway. Please try again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Step 2 — Create Razorpay order on server
+      const token = await user.getIdToken();
+      const orderRes = await fetch('/api/razorpay/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          amount: getTotal(),
-          items,
-          userId: user!.uid,
-          userEmail: user!.email,
-          userName: name,
-          shippingAddress: JSON.stringify({ line1, city, state, pincode, phone, name }),
+          items: items.map(item => ({
+            productId: item.productId,
+            quantity: item.quantity,
+            color: item.color || '',
+          })),
+          shippingAddress,
         }),
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to initialize payment");
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok) {
+        toast.error(orderData.error || 'Failed to initiate payment');
+        setIsLoading(false);
+        return;
       }
 
-      const { clientSecret: secret } = await res.json();
-      setClientSecret(secret);
-      setStep("payment");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to initialize payment");
-    } finally {
-      setIntentLoading(false);
+      // Step 3 — Open Razorpay modal
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: orderData.amount,           // in paise
+        currency: orderData.currency,
+        name: 'Shivam Hookah',
+        description: 'Premium Hookah Products',
+        image: '/logo.png',                 // your logo path
+        order_id: orderData.orderId,        // rzp_order_xxx
+        
+        // All payment methods enabled
+        method: {
+          upi: true,
+          card: true,
+          netbanking: true,
+          wallet: true,
+          emi: false,
+        },
+
+        prefill: {
+          name: shippingAddress.name,
+          email: user.email || '',
+          contact: shippingAddress.phone,
+        },
+
+        theme: {
+          color: '#d4af37',   // your gold theme color
+        },
+
+        // Payment SUCCESS handler
+        handler: async (response: any) => {
+          console.log('[razorpay] Payment successful:', response);
+          toast.loading('Confirming your order...', { id: 'confirm' });
+
+          try {
+            const freshToken = await user.getIdToken();
+            const verifyRes = await fetch('/api/razorpay/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${freshToken}`,
+              },
+              body: JSON.stringify({
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                shippingAddress,
+                items: orderData.verifiedItems,
+                total: orderData.total,
+              }),
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (!verifyRes.ok) {
+              toast.error(verifyData.error || 'Order confirmation failed', 
+                { id: 'confirm' });
+              setIsLoading(false);
+              return;
+            }
+
+            // Clear cart and redirect to success
+            clearCart();
+            toast.success('Order placed successfully!', { id: 'confirm' });
+            router.push(`/order-success?orderId=${verifyData.orderId}`);
+
+          } catch (err) {
+            console.error('[razorpay] Verification failed:', err);
+            toast.error('Payment received but order confirmation failed. Contact support.',
+              { id: 'confirm' });
+            setIsLoading(false);
+          }
+        },
+
+        // Payment FAILURE handler  
+        modal: {
+          ondismiss: () => {
+            console.log('[razorpay] Payment modal dismissed');
+            toast.info('Payment cancelled');
+            setIsLoading(false);
+          },
+        },
+      };
+
+      const razorpayInstance = new (window as any).Razorpay(options);
+
+      razorpayInstance.on('payment.failed', (response: any) => {
+        console.error('[razorpay] Payment failed:', response.error);
+        toast.error(`Payment failed: ${response.error.description}`);
+        setIsLoading(false);
+      });
+
+      razorpayInstance.open();
+
+    } catch (err) {
+      console.error('[razorpay] Checkout error:', err);
+      toast.error('Something went wrong. Please try again.');
+      setIsLoading(false);
     }
   };
-
-  const handleOrderSuccess = useCallback(
-    (orderId: string) => {
-      router.push(`/order-success?orderId=${orderId}`);
-    },
-    [router]
-  );
 
   if (authLoading || !user) {
     return (
@@ -265,65 +249,51 @@ export default function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-16 lg:gap-20 items-start">
         {/* Main form column */}
         <div className="space-y-8 sm:space-y-10 order-2 lg:order-1" data-aos="fade-right">
-          {step === "address" ? (
-            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <h2 className="text-lg sm:text-xl font-bold tracking-[0.1em] font-serif text-primary uppercase mb-6 sm:mb-8 border-b border-primary/10 pb-4">
-                Delivery Details
-              </h2>
-              <form id="address-form" onSubmit={handleProceedToPayment} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Full Name</Label>
-                    <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="Your name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Phone Number</Label>
-                    <Input id="phone" type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="+91" />
-                  </div>
+          <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-lg sm:text-xl font-bold tracking-[0.1em] font-serif text-primary uppercase mb-6 sm:mb-8 border-b border-primary/10 pb-4">
+              Delivery Details
+            </h2>
+            <form id="address-form" onSubmit={handlePayment} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Full Name</Label>
+                  <Input id="name" required value={shippingAddress.name} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="Your name" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Email Address</Label>
-                  <Input id="email" type="email" required value={email} disabled className="bg-black/10 border-primary/10 opacity-50 cursor-not-allowed" />
+                  <Label htmlFor="phone" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Phone Number</Label>
+                  <Input id="phone" type="tel" required value={shippingAddress.phone} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="+91" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Email Address</Label>
+                <Input id="email" type="email" required value={user.email || ''} disabled className="bg-black/10 border-primary/10 opacity-50 cursor-not-allowed" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="line1" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Street Address</Label>
+                <Input id="line1" required value={shippingAddress.line1} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="House No, Street, Area" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="city" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">City</Label>
+                  <Input id="city" required value={shippingAddress.city} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="City" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="line1" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Street Address</Label>
-                  <Input id="line1" required value={line1} onChange={(e) => setLine1(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="House No, Street, Area" />
+                  <Label htmlFor="state" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">State</Label>
+                  <Input id="state" required value={shippingAddress.state} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="State" />
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">City</Label>
-                    <Input id="city" required value={city} onChange={(e) => setCity(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="City" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">State</Label>
-                    <Input id="state" required value={state} onChange={(e) => setState(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="State" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Pincode</Label>
-                    <Input id="pincode" required value={pincode} onChange={(e) => setPincode(e.target.value)} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="000000" />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pincode" className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Pincode</Label>
+                  <Input id="pincode" required value={shippingAddress.pincode} onChange={handleInputChange} className="bg-black/20 border-primary/10 focus-visible:border-primary/50" placeholder="000000" />
                 </div>
-                <Button type="submit" className="w-full font-bold text-[11px] sm:text-[12px] tracking-[0.2em] h-14 sm:h-16 uppercase shadow-[0_10px_30px_rgba(201,168,76,0.15)] hover:shadow-[0_15px_40px_rgba(201,168,76,0.25)] transition-all mt-4" disabled={intentLoading || items.length === 0}>
-                  {intentLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Initializing...</> : "Proceed to Payment"}
-                </Button>
-              </form>
-            </div>
-          ) : (
-            <div className="bg-[#111111] p-6 sm:p-8 md:p-10 border border-primary/10 rounded-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center justify-between mb-8 border-b border-primary/10 pb-4">
-                <h2 className="text-lg sm:text-xl font-bold tracking-[0.1em] font-serif text-primary uppercase">Secure Payment</h2>
-                <button type="button" onClick={() => setStep("address")} className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors font-bold">← Back</button>
               </div>
-              <div className="text-[10px] sm:text-[11px] text-[#888888] mb-8 bg-black/30 p-4 border-l-2 border-primary/40 uppercase tracking-[0.1em] break-words">
-                Shipping to: <span className="text-[#F5F5F5] font-bold">{line1}, {city}</span>
-              </div>
-              {clientSecret && (
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
-                  <StripePaymentForm name={name} address={JSON.stringify({ line1, city, state, pincode, phone, name })} phone={phone} total={getTotal()} userId={user.uid} userEmail={user.email!} onSuccess={handleOrderSuccess} />
-                </Elements>
-              )}
-            </div>
-          )}
+              <Button type="submit" className="w-full font-bold text-[11px] sm:text-[12px] tracking-[0.2em] h-14 sm:h-16 uppercase shadow-[0_10px_30px_rgba(201,168,76,0.15)] hover:shadow-[0_15px_40px_rgba(201,168,76,0.25)] transition-all mt-4" disabled={isLoading || items.length === 0}>
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${getTotal().toLocaleString("en-IN")}`}
+              </Button>
+              <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center uppercase tracking-[0.1em]">
+                🔒 Secure Encrypted Transaction — Verified by Razorpay
+              </p>
+            </form>
+          </div>
         </div>
 
         {/* Order review column */}

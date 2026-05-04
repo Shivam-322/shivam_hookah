@@ -30,7 +30,7 @@ export interface Product {
   variants?: ProductVariant[];
 }
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({ product, priority = false }: { product: Product, priority?: boolean }) {
   const { addItem } = useCartStore();
 
   const handleAddToCart = () => {
@@ -53,6 +53,8 @@ export default function ProductCard({ product }: { product: Product }) {
           alt={product.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
           className="object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
         />
       </Link>
