@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 
-const WHATSAPP_NUMBER = '919120991695'; // country code + number, no +
+const WHATSAPP_NUMBER = '918922942213'; // country code + number, no +
 const WHATSAPP_MESSAGE = 'Hi! I have a question about your hookah products.';
 
 export default function WhatsAppBubble() {

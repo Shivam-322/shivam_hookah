@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
 import crypto from 'crypto';
 import type { Order } from '@/types/index';
+import { waitUntil } from '@vercel/functions';
 
 export const runtime = 'nodejs';
+export const preferredRegion = 'bom1'; // Mumbai — closest to Shiprocket
+export const maxDuration = 30;         // 30 seconds
 
 export async function POST(req: NextRequest) {
   // Step 1 — Verify Firebase auth token
@@ -145,16 +148,22 @@ export async function POST(req: NextRequest) {
 
   // Step 7 — All background jobs — non blocking
   // 1. Shiprocket shipment creation
-  createShiprocketShipmentBackground(docRef.id, orderData)
-    .catch(err => console.error('[shiprocket] Background failed:', err));
+  waitUntil(
+    createShiprocketShipmentBackground(docRef.id, orderData)
+      .catch(err => console.error('[shiprocket] Failed:', err))
+  );
 
   // 2. Google Sheets sync
-  syncToGoogleSheets(docRef.id, orderData)
-    .catch(err => console.error('[sheetdb] Sync failed:', err));
+  waitUntil(
+    syncToGoogleSheets(docRef.id, orderData)
+      .catch(err => console.error('[sheetdb] Failed:', err))
+  );
 
   // 3. Confirmation email
-  sendConfirmationEmail(orderData, docRef.id)
-    .catch(err => console.error('[email] Send failed:', err));
+  waitUntil(
+    sendConfirmationEmail(orderData, docRef.id)
+      .catch(err => console.error('[email] Failed:', err))
+  );
 
   // Return success immediately to client
   return NextResponse.json({

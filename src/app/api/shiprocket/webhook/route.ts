@@ -3,6 +3,8 @@ import { adminDb } from '@/lib/firebase-admin';
 import { sheetdb } from '@/lib/sheetdb';
 
 export const runtime = 'nodejs';
+export const preferredRegion = 'bom1'; // Mumbai — closest to Shiprocket
+export const maxDuration = 30;         // 30 seconds
 
 // Shiprocket sends these status codes in their webhooks
 // Map them to our internal status system

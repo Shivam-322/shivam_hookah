@@ -4,6 +4,8 @@ import { shiprocket } from '@/lib/shiprocket';
 import { sheetdb } from '@/lib/sheetdb';
 
 export const runtime = 'nodejs';
+export const preferredRegion = 'bom1'; // Mumbai — closest to Shiprocket
+export const maxDuration = 30;         // 30 seconds
 
 export async function POST(req: NextRequest) {
   // Verify admin

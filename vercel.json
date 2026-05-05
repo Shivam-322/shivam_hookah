@@ -1,0 +1,16 @@
+{
+  "functions": {
+    "src/app/api/razorpay/verify-payment/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/razorpay/create-order/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/shiprocket/webhook/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/admin/retry-shipment/route.ts": {
+      "maxDuration": 30
+    }
+  }
+}
