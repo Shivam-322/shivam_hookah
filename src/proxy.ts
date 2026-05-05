@@ -7,6 +7,7 @@ export function proxy(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   
   if (isAdminRoute) {
+    
     // Note: full token verification must still happen in each API route.
     // For Next.js Edge middleware with Firebase, we rely on client-side routing
     // and server-side API validation for true security, but this middleware
