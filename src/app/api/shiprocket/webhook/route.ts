@@ -14,23 +14,23 @@ const SHIPROCKET_STATUS_MAP: Record<string, {
   label: string;
 }> = {
   // In Transit statuses
-  'PICKUP PENDING':        { orderStatus: 'shipped',   shippingStatus: 'pickup_pending',    label: 'Pickup Pending' },
-  'PICKUP QUEUED':         { orderStatus: 'shipped',   shippingStatus: 'pickup_queued',     label: 'Pickup Queued' },
-  'PICKED UP':             { orderStatus: 'shipped',   shippingStatus: 'picked_up',         label: 'Picked Up' },
-  'IN TRANSIT':            { orderStatus: 'shipped',   shippingStatus: 'in_transit',        label: 'In Transit' },
-  'OUT FOR DELIVERY':      { orderStatus: 'shipped',   shippingStatus: 'out_for_delivery',  label: 'Out for Delivery' },
-  'DELIVERED':             { orderStatus: 'delivered', shippingStatus: 'delivered',         label: 'Delivered' },
-  
+  'PICKUP PENDING': { orderStatus: 'shipped', shippingStatus: 'pickup_pending', label: 'Pickup Pending' },
+  'PICKUP QUEUED': { orderStatus: 'shipped', shippingStatus: 'pickup_queued', label: 'Pickup Queued' },
+  'PICKED UP': { orderStatus: 'shipped', shippingStatus: 'picked_up', label: 'Picked Up' },
+  'IN TRANSIT': { orderStatus: 'shipped', shippingStatus: 'in_transit', label: 'In Transit' },
+  'OUT FOR DELIVERY': { orderStatus: 'shipped', shippingStatus: 'out_for_delivery', label: 'Out for Delivery' },
+  'DELIVERED': { orderStatus: 'delivered', shippingStatus: 'delivered', label: 'Delivered' },
+
   // Problem statuses
-  'UNDELIVERED':           { orderStatus: 'shipped',   shippingStatus: 'undelivered',       label: 'Undelivered' },
-  'DELIVERY FAILED':       { orderStatus: 'shipped',   shippingStatus: 'delivery_failed',   label: 'Delivery Failed' },
-  'RTO INITIATED':         { orderStatus: 'shipped',   shippingStatus: 'rto_initiated',     label: 'RTO Initiated' },
-  'RTO DELIVERED':         { orderStatus: 'shipped',   shippingStatus: 'rto_delivered',     label: 'RTO Delivered' },
-  'LOST':                  { orderStatus: 'shipped',   shippingStatus: 'lost',              label: 'Lost' },
-  'DAMAGED':               { orderStatus: 'shipped',   shippingStatus: 'damaged',           label: 'Damaged' },
-  
+  'UNDELIVERED': { orderStatus: 'shipped', shippingStatus: 'undelivered', label: 'Undelivered' },
+  'DELIVERY FAILED': { orderStatus: 'shipped', shippingStatus: 'delivery_failed', label: 'Delivery Failed' },
+  'RTO INITIATED': { orderStatus: 'shipped', shippingStatus: 'rto_initiated', label: 'RTO Initiated' },
+  'RTO DELIVERED': { orderStatus: 'shipped', shippingStatus: 'rto_delivered', label: 'RTO Delivered' },
+  'LOST': { orderStatus: 'shipped', shippingStatus: 'lost', label: 'Lost' },
+  'DAMAGED': { orderStatus: 'shipped', shippingStatus: 'damaged', label: 'Damaged' },
+
   // Cancelled
-  'CANCELLED':             { orderStatus: 'cancelled', shippingStatus: 'cancelled',         label: 'Cancelled' },
+  'CANCELLED': { orderStatus: 'cancelled', shippingStatus: 'cancelled', label: 'Cancelled' },
 };
 
 export async function POST(req: NextRequest) {
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
   // Shiprocket sends different payload shapes — handle both
   const awb = body.awb || body.AWB || body.shipment_track?.[0]?.awb_code;
   const currentStatus = (
-    body.current_status || 
-    body.status || 
+    body.current_status ||
+    body.status ||
     body.shipment_status ||
     body.shipment_track?.[0]?.current_status ||
     ''
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
     // Sync to Google Sheets
     try {
       await sheetdb.updateOrderStatus(orderId, {
-        orderStatus: statusMapping.orderStatus.charAt(0).toUpperCase() 
+        orderStatus: statusMapping.orderStatus.charAt(0).toUpperCase()
           + statusMapping.orderStatus.slice(1),
         shippingStatus: statusMapping.label,
       });

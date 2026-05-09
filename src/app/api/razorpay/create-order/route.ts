@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
   let total = 0;
   const verifiedItems: any[] = [];
 
-  console.log('[create-order] Starting price verification for:', decodedToken.email);
+  console.log('[create-order] Starting price verification');
 
 
   try {
@@ -75,12 +75,12 @@ export async function POST(req: NextRequest) {
 
       const product = productDoc.data()!;
 
-      // if (product.stock < item.quantity) {
-      //   return NextResponse.json(
-      //     { error: `Insufficient stock for: ${product.name}` },
-      //     { status: 400 }
-      //   );
-      // }
+      if (product.stock < item.quantity) {
+        return NextResponse.json(
+          { error: `Insufficient stock for: ${product.name}` },
+          { status: 400 }
+        );
+      }
 
       total += product.price * item.quantity;
 
@@ -101,22 +101,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log(`[create-order] Verification complete. Total: ₹${total} for ${verifiedItems.length} items.`);
+  console.log(`[create-order] Verification complete. ${verifiedItems.length} items.`);
 
   // Step 4 — Create Razorpay order
 
   // Amount must be in paise (1 INR = 100 paise)
   try {
-    console.log('[create-order] Razorpay payload:', {
-      amount: Math.round(total * 100),
-      currency: 'INR',
-      receipt: `order_${Date.now()}`,
-    });
+    const receipt = `ord_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
 
     const razorpayOrder = await razorpay.orders.create({
       amount: Math.round(total * 100), // paise
       currency: 'INR',
-      receipt: `order_${Date.now()}`,
+      receipt,
       notes: {
         userId: decodedToken.uid,
         userEmail: decodedToken.email || '',
@@ -131,7 +127,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log('[create-order] ✅ Razorpay Order Created:', razorpayOrder.id);
+    console.log('[create-order] ✅ Razorpay order created');
 
 
     return NextResponse.json({
@@ -139,7 +135,6 @@ export async function POST(req: NextRequest) {
       orderId: razorpayOrder.id,        // rzp_order_xxx
       amount: razorpayOrder.amount,     // in paise
       currency: razorpayOrder.currency,
-      keyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       // Send verified data back so checkout can use it
       verifiedItems,
       total,
