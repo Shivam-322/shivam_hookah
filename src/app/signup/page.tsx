@@ -98,7 +98,7 @@ function SignupContent() {
         });
       }
 
-      toast.success("Account ready! Welcome to Shivam Hookah.");
+      toast.success("Account ready! Welcome to Shivam Lifestyle.");
       router.push(redirect);
     } catch (err: any) {
       console.error("Google popup initiation error:", err);
@@ -145,7 +145,7 @@ function SignupContent() {
         <div className="flex flex-col items-center">
           <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold mb-2">Join the Elite</span>
           <CardTitle className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-[0.1em] text-[#F5F5F5] font-serif uppercase">
-            Shivam Hookah
+            Shivam Lifestyle
           </CardTitle>
         </div>
         <CardDescription className="text-muted-foreground uppercase text-[9px] sm:text-[10px] tracking-[0.1em]">Create your premium profile</CardDescription>

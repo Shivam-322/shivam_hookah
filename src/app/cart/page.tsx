@@ -46,7 +46,7 @@ export default function CartPage() {
         <span className="section-label">Your Selection</span>
         <div className="section-label-hr"></div>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-[0.05em] text-[#F5F5F5] font-serif mt-2 sm:mt-4">
-          Shopping Cart
+          Your Cart
         </h1>
       </div>
 
@@ -145,7 +145,7 @@ export default function CartPage() {
               Proceed to Checkout
             </Button>
             <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center mt-6 uppercase tracking-[0.1em]">
-              Complimentary session insurance included
+              Complimentary order insurance included
             </p>
           </div>
         </div>

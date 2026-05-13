@@ -9,9 +9,9 @@ export default function Footer() {
           {/* Brand */}
           <div className="text-center md:text-left">
             <h2 className="font-bold text-primary tracking-[0.1em] text-xl sm:text-2xl mb-2 font-serif uppercase">
-              SHIVAM HOOKAH
+              SHIVAM LIFESTYLE ACCESSORIES
             </h2>
-            <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase hidden md:block">The Art of Session</p>
+            <p className="text-[10px] text-muted-foreground tracking-[0.2em] uppercase hidden md:block">Premium lifestyle accessories for the modern Indian consumer</p>
           </div>
 
           {/* Links */}
@@ -46,7 +46,7 @@ export default function Footer() {
 
         <div className="mt-12 border-t border-primary/10 pt-8 text-center flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] sm:text-xs text-muted-foreground tracking-widest uppercase">
           <p>
-            &copy; {new Date().getFullYear()} Shivam Hookah. All rights reserved.
+            &copy; {new Date().getFullYear()} Shivam Lifestyle Accessories. All rights reserved.
           </p>
           <div className="flex gap-4 sm:gap-8">
             <p className="hidden sm:block">Crafted for the culture.</p>

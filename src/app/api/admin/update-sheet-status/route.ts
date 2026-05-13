@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth } from '@/lib/firebase-admin';
+import { z } from 'zod';
 import { sheetdb } from '@/lib/sheetdb';
 
 export const runtime = 'nodejs';
@@ -14,7 +15,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const decoded = await adminAuth.verifyIdToken(token);
-    if (!decoded.admin) {
+    const ADMIN_EMAILS = [
+      process.env.ADMIN_EMAIL_1,
+      process.env.ADMIN_EMAIL_2,
+    ].filter(Boolean);
+    
+    if (!decoded.email || !ADMIN_EMAILS.includes(decoded.email)) {
       console.error('[admin] Unauthorized access attempt by:', decoded.email);
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
@@ -22,14 +28,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const { orderId, status } = await req.json();
+  const body = await req.json();
+  const validation = z.object({
+    orderId: z.string().min(1, 'orderId required').max(100),
+    status: z.string().min(1, 'status required').max(50),
+  }).safeParse(body);
 
-  if (!orderId || !status) {
+  if (!validation.success) {
     return NextResponse.json(
-      { error: 'orderId and status required' },
+      { error: "Invalid request", details: validation.error.flatten() },
       { status: 400 }
     );
   }
+
+  const { orderId, status } = validation.data;
 
   try {
     await sheetdb.updateOrderStatus(orderId, {

@@ -167,13 +167,15 @@ export default function OrderDetailsPage() {
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Transaction ID</p>
-                    <p className="text-[11px] text-white font-mono break-all">{order.payment?.razorpayPaymentId || "N/A"}</p>
-                    {order.payment?.razorpayPaymentId && (
-                      <a href={`https://dashboard.razorpay.com/app/payments/${order.payment.razorpayPaymentId}`} target="_blank" rel="noopener noreferrer" className="text-[9px] uppercase tracking-widest text-blue-400 hover:underline mt-2 inline-block">
-                        View in Razorpay Dashboard →
-                      </a>
-                    )}
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Merchant Txn ID</p>
+                    <p className="text-[11px] text-white font-mono break-all mb-4">{order.payment?.merchantTransactionId || "N/A"}</p>
+                    
+                    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">PhonePe ID</p>
+                    <p className="text-[11px] text-white font-mono break-all">{order.payment?.phonePeTransactionId || "N/A"}</p>
+                    
+                    <a href="https://dashboard.phonepe.com/" target="_blank" rel="noopener noreferrer" className="text-[9px] uppercase tracking-widest text-blue-400 hover:underline mt-4 inline-block">
+                      View in PhonePe Dashboard →
+                    </a>
                   </div>
                   <div className="pt-4 border-t border-white/5">
                     <div className="flex justify-between items-center mb-2">

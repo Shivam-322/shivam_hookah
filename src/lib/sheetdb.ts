@@ -9,7 +9,7 @@ class SheetDBService {
     userEmail: string;
     phone: string;
     total: number;
-    razorpayPaymentId: string;
+    paymentId: string;
     items: Array<{ name: string; quantity: number; price: number }>;
     shippingAddress: {
       line1: string;
@@ -41,7 +41,7 @@ class SheetDBService {
       'Customer Email': order.userEmail,
       'Phone': order.phone,
       'Total (INR)': `₹${order.total.toFixed(2)}`,
-      'Payment ID': order.razorpayPaymentId,
+      'Payment ID': order.paymentId,
       'Items': itemsString,
       'Shipping Address': order.shippingAddress.line1,
       'City': order.shippingAddress.city,

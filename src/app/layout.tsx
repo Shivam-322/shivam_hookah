@@ -21,9 +21,30 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Shivam Hookah — Premium Luxury Experience",
-  description:
-    "Handcrafted hookahs, premium shisha flavors, and everything you need for the perfect session.",
+  title: {
+    default: "Shivam Lifestyle Accessories",
+    template: "%s | Shivam Lifestyle Accessories"
+  },
+  description: "Premium lifestyle accessories and leisure products for the modern Indian consumer. Shop curated personal accessories with pan-India delivery.",
+  keywords: [
+    "lifestyle accessories",
+    "premium accessories",
+    "leisure products",
+    "lifestyle store india",
+    "personal accessories",
+    "shivam lifestyle"
+  ],
+  openGraph: {
+    title: "Shivam Lifestyle Accessories",
+    description: "Premium lifestyle accessories for the modern Indian consumer.",
+    siteName: "Shivam Lifestyle Accessories",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    title: "Shivam Lifestyle Accessories",
+    description: "Premium lifestyle accessories for the modern Indian consumer.",
+  },
 };
 
 export default function RootLayout({

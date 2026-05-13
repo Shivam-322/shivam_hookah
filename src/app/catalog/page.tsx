@@ -54,14 +54,19 @@ function CatalogContent() {
         <span className="section-label">Our Collection</span>
         <div className="section-label-hr"></div>
         <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-[0.05em] text-[#F5F5F5] font-serif mt-2 sm:mt-4 break-words w-full">
-          The {activeCategory ? activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1).toLowerCase() : "Collection"}
+          {activeCategory 
+            ? (activeCategory.toLowerCase() === 'hookah' ? 'Lifestyle Accessories' : activeCategory.charAt(0).toUpperCase() + activeCategory.slice(1).toLowerCase()) 
+            : "Our Collection"}
         </h1>
+        <p className="text-muted-foreground mt-4 text-sm sm:text-base max-w-2xl font-light tracking-wide leading-relaxed">
+          Explore our curated range of premium lifestyle accessories
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 mb-8 sm:mb-12 items-start lg:items-center justify-between" data-aos="fade-up" data-aos-delay="100" suppressHydrationWarning>
         <div className="relative w-full lg:max-w-md group">
           <Input
-            placeholder="Search flavors, hookahs..."
+            placeholder="Search our lifestyle collection..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-[#111111] border-primary/20 focus-visible:border-primary/60 h-11 rounded-sm pl-4 transition-all"
@@ -91,7 +96,7 @@ function CatalogContent() {
                     : "border-primary/20 text-muted-foreground hover:border-primary/60"
                 }`}
               >
-                {cat}
+                {cat === "Hookah" ? "Lifestyle Accessories" : cat === "Flavors" ? "Social Essentials" : cat}
               </button>
             ))}
           </div>

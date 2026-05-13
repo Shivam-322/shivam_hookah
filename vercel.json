@@ -1,12 +1,12 @@
 {
   "functions": {
-    "src/app/api/razorpay/verify-payment/route.ts": {
+    "src/app/api/phonepe/initiate/route.ts": {
       "maxDuration": 30
     },
-    "src/app/api/razorpay/create-order/route.ts": {
+    "src/app/api/phonepe/redirect/route.ts": {
       "maxDuration": 30
     },
-    "src/app/api/razorpay/webhook/route.ts": {
+    "src/app/api/phonepe/callback/route.ts": {
       "maxDuration": 30
     },
     "src/app/api/shiprocket/webhook/route.ts": {

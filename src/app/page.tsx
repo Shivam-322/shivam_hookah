@@ -25,23 +25,22 @@ export default function Home() {
             data-aos-delay="200"
             className="text-[10px] sm:text-[11px] tracking-[0.3em] text-primary uppercase mb-4 sm:mb-6 font-sans font-bold"
           >
-            Shivam Hookah
+            Shivam Lifestyle Accessories
           </p>
           <h1 
             data-aos="fade-up" 
             data-aos-delay="400"
             className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold tracking-[0.05em] mb-4 sm:mb-6 drop-shadow-2xl text-[#F5F5F5] font-serif leading-[1.1] break-words"
           >
-            Elevate Your<br />
-            <span className="text-primary italic">Smoke Session</span>
+            Premium Lifestyle<br />
+            <span className="text-primary italic">Accessories</span>
           </h1>
           <p 
             data-aos="fade-up" 
             data-aos-delay="600"
             className="mx-auto max-w-[600px] text-sm sm:text-base md:text-lg text-[#888888] font-light mb-8 sm:mb-12 font-sans leading-relaxed"
           >
-            Handcrafted hookahs, premium flavors, and everything you need for
-            the perfect session.
+            Curated lifestyle products delivered pan-India to your doorstep
           </p>
           <div 
             data-aos="fade-up" 
@@ -77,7 +76,7 @@ export default function Home() {
               {
                 icon: "🪔",
                 title: "Premium Quality",
-                desc: "Handpicked hookah products",
+                desc: "Handpicked lifestyle products",
               },
               {
                 icon: "🚚",
@@ -86,8 +85,8 @@ export default function Home() {
               },
               {
                 icon: "💨",
-                title: "Flavor Guarantee",
-                desc: "100% authentic flavors",
+                title: "Quality Guarantee",
+                desc: "100% authentic accessories",
               },
             ].map((f, i) => (
               <div 
@@ -133,7 +132,7 @@ export default function Home() {
                 <div className="absolute inset-0 bg-black/80 group-hover:bg-black/40 transition-colors z-10 duration-500" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center z-20 gap-4">
                   <h3 className="text-xl sm:text-2xl font-bold text-white tracking-[0.15em] uppercase font-serif transform transition-transform duration-500 group-hover:-translate-y-2">
-                    {cat}
+                    {cat === "Hookah" ? "Lifestyle Accessories" : cat === "Flavors" ? "Social Essentials" : cat}
                   </h3>
                   <span className="text-[10px] sm:text-xs text-primary tracking-[0.2em] uppercase opacity-0 transform translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
                     Explore

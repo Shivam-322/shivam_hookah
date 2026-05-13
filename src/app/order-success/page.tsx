@@ -7,11 +7,21 @@ import { Suspense, useEffect, useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { useCartStore } from "@/store/useCartStore";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
-  const [razorpayPaymentId, setRazorpayPaymentId] = useState<string | null>(null);
+  const [paymentId, setPaymentId] = useState<string | null>(null);
+  const clearCart = useCartStore((state) => state.clearCart);
+
+  useEffect(() => {
+    // Clear cart on success
+    clearCart();
+
+    // Clear cart backup from localStorage
+    localStorage.removeItem("cart_backup");
+  }, [clearCart]);
 
   useEffect(() => {
     async function fetchOrder() {
@@ -19,8 +29,13 @@ function SuccessContent() {
       try {
         const orderDoc = await getDoc(doc(db, "orders", orderId));
         if (orderDoc.exists()) {
-          // Use nested payment field
-          setRazorpayPaymentId(orderDoc.data().payment?.razorpayPaymentId || null);
+          const payment = orderDoc.data().payment;
+          // Use PhonePe transaction ID or merchant transaction ID
+          setPaymentId(
+            payment?.phonePeTransactionId ||
+            payment?.merchantTransactionId ||
+            null
+          );
         }
       } catch (err) {
         // console.error("Failed to fetch order");
@@ -31,7 +46,7 @@ function SuccessContent() {
 
   return (
     <div className="luxury-container section-padding min-h-[80vh] flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full text-center space-y-8 sm:space-y-10" data-aos="zoom-in">
+      <div className="max-w-2xl w-full text-center space-y-8 sm:space-y-10" data-aos="zoom-in" suppressHydrationWarning>
         <div className="flex justify-center">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center shadow-[0_0_50px_rgba(201,168,76,0.3)]">
             <CheckCircle2 className="w-10 h-10 sm:w-12 sm:h-12 text-primary" />
@@ -52,10 +67,10 @@ function SuccessContent() {
           <div className="bg-[#111111] p-4 sm:p-6 border border-primary/10 rounded-sm inline-block w-full sm:w-auto">
             <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2">Order ID</p>
             <p className="text-primary font-mono text-xs sm:text-sm tracking-widest break-all px-2">{orderId}</p>
-            {razorpayPaymentId && (
+            {paymentId && (
               <>
                 <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 mt-4">Payment ID</p>
-                <p className="text-primary font-mono text-xs sm:text-sm tracking-widest break-all px-2">{razorpayPaymentId}</p>
+                <p className="text-primary font-mono text-xs sm:text-sm tracking-widest break-all px-2">{paymentId}</p>
               </>
             )}
           </div>

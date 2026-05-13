@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 
 const WHATSAPP_NUMBER = '918922942213'; // country code + number, no +
-const WHATSAPP_MESSAGE = 'Hi! I have a question about your hookah products.';
+const WHATSAPP_MESSAGE = 'Hi! I have a question about your lifestyle products.';
 
 export default function WhatsAppBubble() {
   const [isHovered, setIsHovered] = useState(false);

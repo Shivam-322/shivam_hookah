@@ -47,6 +47,27 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleRetryShipment = async (orderId: string) => {
+    try {
+      if (!user) return;
+      toast.info("Retrying shipment...");
+      const token = await user.getIdToken();
+      const res = await fetch('/api/admin/retry-shipment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId }),
+      });
+      if (res.ok) {
+        toast.success("Shipment retried successfully!");
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to retry shipment");
+      }
+    } catch {
+      toast.error("Failed to retry shipment");
+    }
+  };
+
   if (loading) return <div className="text-muted-foreground animate-pulse p-8">Loading orders...</div>;
 
   return (
@@ -92,13 +113,32 @@ export default function AdminOrdersPage() {
                       courierName={order.shiprocket?.courierName || undefined}
                     />
                     <div className="mt-1 space-y-0.5">
+                      {order.backgroundTasks?.email === 'success' && <p className="text-xs text-green-400">✅ Email sent</p>}
+                      {order.backgroundTasks?.email === 'failed' && <p className="text-xs text-red-400">❌ Email failed</p>}
+                      
+                      {order.backgroundTasks?.googleSheets === 'success' && <p className="text-xs text-green-400">✅ Sheet synced</p>}
+                      {order.backgroundTasks?.googleSheets === 'failed' && <p className="text-xs text-red-400">❌ Sheet failed</p>}
+                      
+                      {order.backgroundTasks?.shiprocket === 'success' && <p className="text-xs text-green-400">✅ Shiprocket created</p>}
+                      {(order.backgroundTasks?.shiprocket === 'failed' || order.shiprocket?.status === 'shiprocket_failed') && (
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-red-400">❌ Shiprocket failed</p>
+                          <button 
+                            className="text-[10px] bg-red-900/50 text-white px-2 py-0.5 rounded"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetryShipment(order.id!);
+                            }}
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      )}
+                      
                       {order.shiprocket?.awb && (
                         <p className="text-xs text-gray-400 font-mono mt-1">📦 {order.shiprocket.courierName} · {order.shiprocket.awb}</p>
                       )}
-                      {order.shiprocket?.status === 'shiprocket_failed' && (
-                        <p className="text-xs text-red-400 mt-1">⚠️ Shiprocket failed</p>
-                      )}
-                      {!order.shiprocket?.orderId && order.shiprocket?.status !== 'shiprocket_failed' && order.status === 'confirmed' && (
+                      {!order.shiprocket?.orderId && order.shiprocket?.status !== 'shiprocket_failed' && order.status === 'confirmed' && !order.backgroundTasks?.shiprocket && (
                         <p className="text-xs text-yellow-400 mt-1">⏳ Creating shipment...</p>
                       )}
                     </div>

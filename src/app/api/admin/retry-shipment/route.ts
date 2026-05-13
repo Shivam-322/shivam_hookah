@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
+import { z } from 'zod';
 import { shiprocket } from '@/lib/shiprocket';
 import { sheetdb } from '@/lib/sheetdb';
 
@@ -18,7 +19,12 @@ export async function POST(req: NextRequest) {
 
   try {
     const decoded = await adminAuth.verifyIdToken(token);
-    if (!decoded.admin) {
+    const ADMIN_EMAILS = [
+      process.env.ADMIN_EMAIL_1,
+      process.env.ADMIN_EMAIL_2,
+    ].filter(Boolean);
+    
+    if (!decoded.email || !ADMIN_EMAILS.includes(decoded.email)) {
       console.error('[admin] Unauthorized access attempt by:', decoded.email);
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
@@ -26,11 +32,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 
-  const { orderId } = await req.json();
+  const body = await req.json();
+  const validation = z.object({
+    orderId: z.string().min(1, 'orderId required').max(100),
+  }).safeParse(body);
 
-  if (!orderId) {
-    return NextResponse.json({ error: 'orderId required' }, { status: 400 });
+  if (!validation.success) {
+    return NextResponse.json(
+      { error: "Invalid request", details: validation.error.flatten() },
+      { status: 400 }
+    );
   }
+
+  const { orderId } = validation.data;
 
   const orderRef = adminDb.collection('orders').doc(orderId);
   const orderSnap = await orderRef.get();

@@ -149,7 +149,7 @@ export default function AddProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <Label htmlFor="name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Product Name</Label>
-              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} className="bg-background h-14 text-lg border-border/50 focus:border-primary/50 transition-colors" placeholder="e.g. Sultan Premium Hookah" />
+              <Input id="name" required value={name} onChange={(e) => setName(e.target.value)} className="bg-background h-14 text-lg border-border/50 focus:border-primary/50 transition-colors" placeholder="e.g. Premium Lifestyle Accessory" />
             </div>
             <div className="space-y-3">
               <Label htmlFor="category" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Category</Label>

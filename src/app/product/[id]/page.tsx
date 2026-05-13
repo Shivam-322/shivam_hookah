@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Product } from "@/components/ProductCard";
+import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -67,11 +68,22 @@ export default function ProductDetailPage() {
       imageUrl: currentVariant.images[selectedImage]?.url || product.imageUrl,
       color: currentVariant.color || product.color,
     });
-    toast.success(`${product.name} (${currentVariant.color}) added to your session!`);
+    toast.success(`${product.name} (${currentVariant.color}) added to your collection!`);
   };
 
   return (
     <div className="luxury-container section-padding min-h-screen bg-[#0A0A0A] px-4 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <nav className="flex mb-8 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] text-muted-foreground font-bold" data-aos="fade-down">
+        <ol className="flex flex-wrap items-center gap-2">
+          <li><Link href="/" className="hover:text-primary transition-colors">Home</Link></li>
+          <li><span className="opacity-50">→</span></li>
+          <li><Link href="/catalog" className="hover:text-primary transition-colors">Lifestyle Accessories</Link></li>
+          <li><span className="opacity-50">→</span></li>
+          <li className="text-primary truncate max-w-[150px] sm:max-w-none">{product.name}</li>
+        </ol>
+      </nav>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16 lg:gap-24 items-start">
         {/* Gallery Section */}
         <div className="space-y-6" data-aos="fade-right">
@@ -115,7 +127,7 @@ export default function ProductDetailPage() {
         <div className="flex flex-col space-y-8 sm:space-y-10" data-aos="fade-left">
           <div>
             <div className="flex flex-col items-start mb-4 sm:mb-6">
-              <span className="section-label">{product.category}</span>
+              <span className="section-label">{product.category.toLowerCase() === 'hookah' ? 'Lifestyle Accessories' : product.category}</span>
               <div className="section-label-hr"></div>
             </div>
             
@@ -184,7 +196,7 @@ export default function ProductDetailPage() {
               onClick={handleAddToCart}
               disabled={product.stock <= 0}
             >
-              {product.stock > 0 ? "Add to Session" : "Waitlist Only"}
+              {product.stock > 0 ? "Add to Collection" : "Waitlist Only"}
             </Button>
             
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-white/5">

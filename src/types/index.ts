@@ -17,10 +17,18 @@ export interface ShippingAddress {
 }
 
 export interface OrderPayment {
-  method: 'razorpay';
-  razorpayOrderId: string;
-  razorpayPaymentId: string;
-  status: 'paid';
+  method: 'phonepe';
+  merchantTransactionId: string;
+  phonePeTransactionId: string;
+  status: 'paid' | 'pending' | 'failed';
+  /** Only present on pending orders */
+  expectedAmount?: number;
+  expectedAmountPaise?: number;
+  /** Only present on failed orders */
+  failureCode?: string;
+  failureMessage?: string;
+  /** Set when gateway is detected */
+  gateway?: string;
 }
 
 export interface OrderShiprocket {
@@ -46,13 +54,18 @@ export interface Order {
   userEmail: string;
   userName: string;
   total: number;
-  status: 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'payment_failed' | 'tampered';
   createdAt: string;
   deliveredAt?: string | null;
   payment: OrderPayment;
   shippingAddress: ShippingAddress;
   items: OrderItem[];
   shiprocket: OrderShiprocket;
+  backgroundTasks?: {
+    shiprocket?: 'pending' | 'success' | 'failed';
+    email?: 'pending' | 'success' | 'failed';
+    googleSheets?: 'pending' | 'success' | 'failed';
+  };
 }
 
 export interface Product {

@@ -57,7 +57,7 @@ export default function Navbar() {
         <div className="flex gap-4 lg:gap-10 items-center">
           <Link href="/" className="flex flex-col items-start leading-none group shrink-0">
             <span className="font-bold inline-block text-primary text-lg sm:text-xl md:text-2xl tracking-[0.1em] font-serif transition-transform duration-500 group-hover:scale-105">
-              SHIVAM HOOKAH
+              SHIVAM LIFESTYLE
             </span>
           </Link>
           <nav className="hidden md:flex gap-6 lg:gap-8">

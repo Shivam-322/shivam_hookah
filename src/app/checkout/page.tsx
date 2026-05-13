@@ -11,28 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 
-// Load Razorpay script dynamically
-const loadRazorpayScript = (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window !== 'undefined' && (window as any).Razorpay) {
-      resolve(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
 export default function CheckoutPage() {
   const { user, loading: authLoading } = useAuth();
   const { items, clearCart, getTotal } = useCartStore();
   const router = useRouter();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [shippingAddress, setShippingAddress] = useState({
     name: '',
     phone: '',
@@ -86,17 +71,11 @@ export default function CheckoutPage() {
     setIsLoading(true);
 
     try {
-      // Step 1 — Load Razorpay script
-      const scriptLoaded = await loadRazorpayScript();
-      if (!scriptLoaded) {
-        toast.error('Failed to load payment gateway. Please try again.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 2 — Create Razorpay order on server
+      // Step 1 — Get Firebase token
       const token = await user.getIdToken();
-      const orderRes = await fetch('/api/razorpay/create-order', {
+
+      // Step 2 — Call PhonePe initiate API
+      const res = await fetch('/api/phonepe/initiate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,117 +91,27 @@ export default function CheckoutPage() {
         }),
       });
 
-      const orderData = await orderRes.json();
+      const data = await res.json();
 
-      if (!orderRes.ok) {
-        toast.error(orderData.error || 'Failed to initiate payment');
+      if (!res.ok || !data.redirectUrl) {
+        toast.error(data.error || 'Failed to initiate payment');
         setIsLoading(false);
         return;
       }
 
-      // Step 3 — Open Razorpay modal
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: orderData.amount,           // in paise
-        currency: orderData.currency,
-        name: 'Shivam Hookah',
-        description: 'Premium Hookah Products',
-        image: '/logo.png',                 // your logo path
-        order_id: orderData.orderId,        // rzp_order_xxx
-        
-        // All payment methods enabled
-        method: {
-          upi: true,
-          card: true,
-          netbanking: true,
-          wallet: true,
-          emi: false,
-        },
+      // Step 3 — Save cart to localStorage before leaving the page
+      localStorage.setItem('cart_backup', JSON.stringify(items));
 
-        prefill: {
-          name: shippingAddress.name,
-          email: user.email || '',
-          contact: shippingAddress.phone,
-        },
+      // Step 4 — Show redirecting state and navigate to PhonePe
+      setIsRedirecting(true);
+      toast.loading('Redirecting to PhonePe...', { id: 'phonepe-redirect' });
 
-        theme: {
-          color: '#d4af37',   // your gold theme color
-        },
-
-        // Payment SUCCESS handler
-        handler: async (response: any) => {
-          // console.log('[razorpay] Payment successful');
-          toast.loading('Confirming your order...', { id: 'confirm' });
-
-
-          try {
-            const freshToken = await user.getIdToken();
-            const verifyRes = await fetch('/api/razorpay/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${freshToken}`,
-              },
-              body: JSON.stringify({
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-                shippingAddress,
-                items: orderData.verifiedItems,
-                total: orderData.total,
-              }),
-            });
-
-            const verifyData = await verifyRes.json();
-
-            if (!verifyRes.ok) {
-              toast.error(verifyData.error || 'Order confirmation failed', 
-                { id: 'confirm' });
-              setIsLoading(false);
-              return;
-            }
-
-            // Clear cart and redirect to success
-            clearCart();
-            toast.success('Order placed successfully!', { id: 'confirm' });
-            router.push(`/order-success?orderId=${verifyData.orderId}`);
-
-          } catch (err) {
-            // console.error('[razorpay] Verification failed');
-
-            toast.error('Payment received but order confirmation failed. Contact support.',
-              { id: 'confirm' });
-            setIsLoading(false);
-          }
-        },
-
-        // Payment FAILURE handler  
-        modal: {
-          ondismiss: () => {
-            // console.log('[razorpay] Payment modal dismissed');
-
-            toast.info('Payment cancelled');
-            setIsLoading(false);
-          },
-        },
-      };
-
-      const razorpayInstance = new (window as any).Razorpay(options);
-
-      razorpayInstance.on('payment.failed', (response: any) => {
-        // console.error('[razorpay] Payment failed');
-
-        toast.error(`Payment failed: ${response.error.description}`);
-        setIsLoading(false);
-      });
-
-      razorpayInstance.open();
+      window.location.href = data.redirectUrl;
 
     } catch (err) {
-      // console.error('[razorpay] Checkout error');
-
-      toast.error('Something went wrong. Please try again.');
       setIsLoading(false);
+      setIsRedirecting(false);
+      toast.error('Something went wrong. Please try again.');
     }
   };
 
@@ -230,6 +119,23 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
         <Loader2 className="animate-spin h-12 w-12 text-primary" />
+      </div>
+    );
+  }
+
+  // Show redirecting overlay when navigating to PhonePe
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0A0A0A] gap-6">
+        <Loader2 className="animate-spin h-16 w-16 text-primary" />
+        <div className="text-center space-y-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5F5] tracking-[0.1em] font-serif uppercase">
+            Redirecting to PhonePe
+          </h2>
+          <p className="text-sm text-muted-foreground tracking-wider uppercase">
+            Please wait while we connect you to the payment page...
+          </p>
+        </div>
       </div>
     );
   }
@@ -295,7 +201,7 @@ export default function CheckoutPage() {
                 {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : `Pay ₹${getTotal().toLocaleString("en-IN")}`}
               </Button>
               <p className="text-[9px] sm:text-[10px] text-muted-foreground text-center uppercase tracking-[0.1em]">
-                🔒 Secure Encrypted Transaction — Verified by Razorpay
+                🔒 Secure Encrypted Transaction — Powered by PhonePe
               </p>
             </form>
           </div>
