@@ -125,7 +125,7 @@ function LoginContent() {
   };
 
   return (
-    <Card className="w-full max-w-md border-primary/20 bg-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm" data-aos="zoom-in">
+    <Card suppressHydrationWarning className="w-full max-w-md border-primary/20 bg-[#111111] shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm" data-aos="zoom-in">
       <CardHeader className="space-y-4 text-center pb-6 sm:pb-8 border-b border-primary/10">
         <div className="flex flex-col items-center">
           <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-bold mb-2">Welcome Back</span>

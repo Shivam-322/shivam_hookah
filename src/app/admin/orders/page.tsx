@@ -15,6 +15,7 @@ export default function AdminOrdersPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
@@ -68,6 +69,34 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleConfirmUpiOrder = async (orderId: string) => {
+    if (!user) return;
+    setConfirmingOrderId(orderId);
+    try {
+      const token = await user.getIdToken();
+
+      const res = await fetch('/api/admin/confirm-upi-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Confirmation failed');
+      }
+
+      toast.success("Order confirmed! Shiprocket and email triggered automatically.");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to confirm order. Try again.");
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  };
+
   if (loading) return <div className="text-muted-foreground animate-pulse p-8">Loading orders...</div>;
 
   return (
@@ -91,67 +120,104 @@ export default function AdminOrdersPage() {
                 <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No orders found.</TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
-                <TableRow key={order.id} className="hover:bg-white/5 cursor-pointer transition-colors border-b border-border/20 group" onClick={() => router.push(`/admin/orders/${order.id}`)}>
-                  <TableCell className="font-medium text-amber-500 group-hover:text-amber-400 transition-colors">#{order.id}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-medium text-white text-sm">{order.userEmail}</span>
-                      <span className="text-[10px] text-muted-foreground mt-1 line-clamp-1 max-w-[200px] uppercase tracking-tighter" title={`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}>
-                        {`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-bold text-white">₹{order.total?.toLocaleString("en-IN")}</TableCell>
-                  <TableCell>
-                    <OrderStatusBadge
-                      status={order.status}
-                      shippingStatus={order.shiprocket?.status || undefined}
-                      shippingStatusLabel={order.shiprocket?.statusLabel || undefined}
-                      awb={order.shiprocket?.awb || undefined}
-                      courierName={order.shiprocket?.courierName || undefined}
-                    />
-                    <div className="mt-1 space-y-0.5">
-                      {order.backgroundTasks?.email === 'success' && <p className="text-xs text-green-400">✅ Email sent</p>}
-                      {order.backgroundTasks?.email === 'failed' && <p className="text-xs text-red-400">❌ Email failed</p>}
-                      
-                      {order.backgroundTasks?.googleSheets === 'success' && <p className="text-xs text-green-400">✅ Sheet synced</p>}
-                      {order.backgroundTasks?.googleSheets === 'failed' && <p className="text-xs text-red-400">❌ Sheet failed</p>}
-                      
-                      {order.backgroundTasks?.shiprocket === 'success' && <p className="text-xs text-green-400">✅ Shiprocket created</p>}
-                      {(order.backgroundTasks?.shiprocket === 'failed' || order.shiprocket?.status === 'shiprocket_failed') && (
-                        <div className="flex items-center gap-2">
-                          <p className="text-xs text-red-400">❌ Shiprocket failed</p>
-                          <button 
-                            className="text-[10px] bg-red-900/50 text-white px-2 py-0.5 rounded"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRetryShipment(order.id!);
-                            }}
-                          >
-                            Retry
-                          </button>
-                        </div>
+              orders.map((order) => {
+                const isUpiManual = (order as any).payment?.gateway === 'upi_manual';
+                const isPendingVerification = order.status === ('pending_verification' as any);
+
+                return (
+                  <TableRow key={order.id} className="hover:bg-white/5 cursor-pointer transition-colors border-b border-border/20 group" onClick={() => router.push(`/admin/orders/${order.id}`)}>
+                    <TableCell className="font-medium text-amber-500 group-hover:text-amber-400 transition-colors">#{order.id}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs">{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-white text-sm">{order.userEmail}</span>
+                        <span className="text-[10px] text-muted-foreground mt-1 line-clamp-1 max-w-[200px] uppercase tracking-tighter" title={`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}>
+                          {`${order.shippingAddress?.line1 || ''}, ${order.shippingAddress?.city || ''}`}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-bold text-white">₹{order.total?.toLocaleString("en-IN")}</TableCell>
+                    <TableCell>
+                      {/* Payment gateway badge */}
+                      {isUpiManual && (
+                        <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-1 rounded-full mb-1 inline-block">
+                          📱 UPI Manual
+                        </span>
                       )}
-                      
-                      {order.shiprocket?.awb && (
-                        <p className="text-xs text-gray-400 font-mono mt-1">📦 {order.shiprocket.courierName} · {order.shiprocket.awb}</p>
+
+                      {/* Status badge for UPI pending verification */}
+                      {isUpiManual && isPendingVerification ? (
+                        <span className="bg-orange-100 text-orange-800 text-xs font-medium px-2.5 py-1 rounded-full block mt-1">
+                          ⏳ Awaiting Verification
+                        </span>
+                      ) : (
+                        <OrderStatusBadge
+                          status={order.status}
+                          shippingStatus={order.shiprocket?.status || undefined}
+                          shippingStatusLabel={order.shiprocket?.statusLabel || undefined}
+                          awb={order.shiprocket?.awb || undefined}
+                          courierName={order.shiprocket?.courierName || undefined}
+                        />
                       )}
-                      {!order.shiprocket?.orderId && order.shiprocket?.status !== 'shiprocket_failed' && order.status === 'confirmed' && !order.backgroundTasks?.shiprocket && (
-                        <p className="text-xs text-yellow-400 mt-1">⏳ Creating shipment...</p>
+
+                      <div className="mt-1 space-y-0.5">
+                        {order.backgroundTasks?.email === 'success' && <p className="text-xs text-green-400">✅ Email sent</p>}
+                        {order.backgroundTasks?.email === 'failed' && <p className="text-xs text-red-400">❌ Email failed</p>}
+                        
+                        {order.backgroundTasks?.googleSheets === 'success' && <p className="text-xs text-green-400">✅ Sheet synced</p>}
+                        {order.backgroundTasks?.googleSheets === 'failed' && <p className="text-xs text-red-400">❌ Sheet failed</p>}
+                        
+                        {order.backgroundTasks?.shiprocket === 'success' && <p className="text-xs text-green-400">✅ Shiprocket created</p>}
+                        {(order.backgroundTasks?.shiprocket === 'failed' || order.shiprocket?.status === 'shiprocket_failed') && (
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-red-400">❌ Shiprocket failed</p>
+                            <button 
+                              className="text-[10px] bg-red-900/50 text-white px-2 py-0.5 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRetryShipment(order.id!);
+                              }}
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        )}
+                        
+                        {order.shiprocket?.awb && (
+                          <p className="text-xs text-gray-400 font-mono mt-1">📦 {order.shiprocket.courierName} · {order.shiprocket.awb}</p>
+                        )}
+                        {!order.shiprocket?.orderId && order.shiprocket?.status !== 'shiprocket_failed' && order.status === 'confirmed' && !order.backgroundTasks?.shiprocket && (
+                          <p className="text-xs text-yellow-400 mt-1">⏳ Creating shipment...</p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {/* Show Confirm Payment button for pending UPI orders */}
+                      {isUpiManual && isPendingVerification ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConfirmUpiOrder(order.id!);
+                          }}
+                          disabled={confirmingOrderId === order.id}
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          {confirmingOrderId === order.id
+                            ? "Confirming..."
+                            : "✅ Confirm Payment"
+                          }
+                        </button>
+                      ) : (
+                        <select className="bg-black border border-border/50 rounded-sm px-2 py-1 text-[11px] outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer text-white uppercase tracking-wider font-bold" value={order.status} onClick={(e) => e.stopPropagation()} onChange={(e) => { e.stopPropagation(); handleStatusChange(order.id!, e.target.value); }}>
+                          <option value="confirmed">Confirmed</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                        </select>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <select className="bg-black border border-border/50 rounded-sm px-2 py-1 text-[11px] outline-none focus:ring-1 focus:ring-amber-500/50 cursor-pointer text-white uppercase tracking-wider font-bold" value={order.status} onClick={(e) => e.stopPropagation()} onChange={(e) => { e.stopPropagation(); handleStatusChange(order.id!, e.target.value); }}>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
-                    </select>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

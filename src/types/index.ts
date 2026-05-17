@@ -29,6 +29,10 @@ export interface OrderPayment {
   failureMessage?: string;
   /** Set when gateway is detected */
   gateway?: string;
+  /** UPI Manual specific fields */
+  whatsappSent?: boolean;
+  confirmedAt?: any;
+  confirmedBy?: string | null;
 }
 
 export interface OrderShiprocket {
@@ -54,7 +58,7 @@ export interface Order {
   userEmail: string;
   userName: string;
   total: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'payment_failed' | 'tampered';
+  status: 'pending' | 'pending_verification' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled' | 'payment_failed' | 'tampered';
   createdAt: string;
   deliveredAt?: string | null;
   payment: OrderPayment;
