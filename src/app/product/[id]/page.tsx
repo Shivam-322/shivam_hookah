@@ -15,20 +15,20 @@ export async function generateMetadata({
       .collection("products")
       .doc(id)
       .get();
-    
+
     if (!productDoc.exists) {
       return {
         title: "Product Not Found",
         robots: { index: false, follow: false }
       };
     }
-    
+
     const product = productDoc.data()!;
     const name = product.name || "";
     const price = product.price || 0;
     const description = product.description || "";
-    const imageUrl = product.imageUrl || product.image || "/images/logo.jpeg";
-    
+    const imageUrl = product.imageUrl || product.image || "/images/og-image.jpg";
+
     return {
       title: `${name} — Buy Online India | Shivam Lifestyle Accessories`,
       description: `Buy ${name} online at ₹${price}. Premium lifestyle accessory with shipping across India. ${description.substring(0, 100)}...`,
@@ -53,7 +53,7 @@ export async function generateMetadata({
         description: `Buy ${name} online at ₹${price}. Shipping across India.`,
         url: `https://shivamhookah.in/product/${id}`,
         images: [
-          { 
+          {
             url: imageUrl,
             alt: name,
             width: 800,
@@ -83,7 +83,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
+
   let productData = null;
   try {
     const productDoc = await adminDb

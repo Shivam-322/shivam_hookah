@@ -8,7 +8,7 @@ export function OrganizationJsonLd() {
           "@type": "Organization",
           name: "Shivam Lifestyle Accessories",
           url: "https://shivamhookah.in",
-          logo: "https://shivamhookah.in/images/logo.jpeg",
+          logo: "https://shivamhookah.in/images/og-image.jpg",
           description: "Premium hookah, shisha and lifestyle accessories online store in India. Free pan-India delivery.",
           contactPoint: {
             "@type": "ContactPoint",

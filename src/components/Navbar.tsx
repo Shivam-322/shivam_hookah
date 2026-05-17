@@ -58,7 +58,7 @@ export default function Navbar() {
         <div className="flex gap-4 lg:gap-10 items-center">
           <Link href="/" className="flex items-center gap-3 leading-none group shrink-0">
             <Image
-              src="/images/logo.jpeg"
+              src="/images/og-image.jpg"
               alt="Shivam Lifestyle Accessories Logo"
               width={40}
               height={40}
@@ -146,11 +146,11 @@ export default function Navbar() {
         )}
       >
         {/* Overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           onClick={() => setIsMenuOpen(false)}
         />
-        
+
         {/* Content */}
         <div
           className={cn(
@@ -168,7 +168,7 @@ export default function Navbar() {
               {link.name}
             </Link>
           ))}
-          
+
           <div className="flex flex-col items-center gap-6 w-full pt-6 border-t border-primary/10">
             {user ? (
               <Button
@@ -189,7 +189,7 @@ export default function Navbar() {
                 </Button>
               </Link>
             )}
-            
+
             {isAdmin && (
               <Link href="/admin" onClick={() => setIsMenuOpen(false)} className="w-full">
                 <Button variant="outline" className="w-full h-12 border-primary/50 text-primary tracking-[0.15em] uppercase font-bold">
