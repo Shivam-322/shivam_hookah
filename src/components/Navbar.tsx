@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ShoppingCart, LogOut, User as UserIcon, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/useCartStore";
@@ -55,8 +56,15 @@ export default function Navbar() {
       <div className="luxury-container flex h-[70px] md:h-[80px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <div className="flex gap-4 lg:gap-10 items-center">
-          <Link href="/" className="flex flex-col items-start leading-none group shrink-0">
-            <span className="font-bold inline-block text-primary text-lg sm:text-xl md:text-2xl tracking-[0.1em] font-serif transition-transform duration-500 group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-3 leading-none group shrink-0">
+            <Image
+              src="/images/logo.jpeg"
+              alt="Shivam Lifestyle Accessories Logo"
+              width={40}
+              height={40}
+              className="rounded-full border border-primary/30 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-105"
+            />
+            <span className="font-bold inline-block text-primary text-lg sm:text-xl md:text-2xl tracking-[0.1em] font-serif transition-transform duration-500 group-hover:scale-[1.02]">
               SHIVAM LIFESTYLE
             </span>
           </Link>

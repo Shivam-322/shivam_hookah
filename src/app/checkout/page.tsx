@@ -19,7 +19,7 @@ export default function CheckoutPage() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"online" | "upi">("online");
+  const [paymentMethod, setPaymentMethod] = useState<"online" | "upi">("upi");
 
   // UPI-specific states
   const [upiOrderPlaced, setUpiOrderPlaced] = useState(false);
@@ -274,8 +274,9 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-2 gap-3 mb-6">
                   <button
                     type="button"
-                    onClick={() => setPaymentMethod("online")}
-                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                    disabled
+                    title="Under Construction"
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all opacity-50 cursor-not-allowed ${
                       paymentMethod === "online"
                         ? "border-purple-500 bg-purple-50"
                         : "border-gray-200 bg-white"

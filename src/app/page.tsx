@@ -1,5 +1,20 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Shivam Lifestyle Accessories",
+  description: "Buy premium hookah, shisha and lifestyle accessories online in India. Shop hookah pipes, flavours, charcoal and accessories at the best prices.Shipping pan-India. Secure payments.",
+  alternates: {
+    canonical: "https://shivamhookah.in",
+  },
+  openGraph: {
+    title: "Shivam Lifestyle Accessories — Premium Products India",
+    description: "Shop premium lifestyle accessories online. Shipping across India.",
+    url: "https://shivamhookah.in",
+    images: ["/images/logo.jpeg"],
+  },
+};
 
 export default function Home() {
   return (
