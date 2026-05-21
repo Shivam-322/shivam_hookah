@@ -24,7 +24,7 @@ export default function AddProductPage() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("");
-  const [stock, setStock] = useState("");
+  const [isStocked, setIsStocked] = useState(true);
   const [variants, setVariants] = useState<Variant[]>([
     { color: "", files: [], previews: [] }
   ]);
@@ -116,7 +116,7 @@ export default function AddProductPage() {
         description,
         price: parseFloat(price),
         category: category.toLowerCase(),
-        stock: parseInt(stock, 10),
+        stock: isStocked ? 100 : 0,
         imageUrl: uploadedVariants[0].images[0].url, // Set first image as main
         imageFileId: uploadedVariants[0].images[0].fileId,
         color: uploadedVariants[0].color,
@@ -130,7 +130,7 @@ export default function AddProductPage() {
       setDescription(""); 
       setPrice(""); 
       setCategory(""); 
-      setStock(""); 
+      setIsStocked(true); 
       setVariants([{ color: "", files: [], previews: [] }]);
 
     } catch (error: any) {
@@ -168,8 +168,25 @@ export default function AddProductPage() {
               <Input id="price" type="number" required min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} className="bg-background h-14 text-lg border-border/50 focus:border-primary/50 transition-colors" />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="stock" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Stock Quantity</Label>
-              <Input id="stock" type="number" required min="0" step="1" value={stock} onChange={(e) => setStock(e.target.value)} className="bg-background h-14 text-lg border-border/50 focus:border-primary/50 transition-colors" />
+              <Label className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Stock Status</Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  variant={isStocked ? "default" : "outline"}
+                  onClick={() => setIsStocked(true)}
+                  className="flex-1 h-14 text-base font-bold tracking-wider transition-all"
+                >
+                  STOCKED (100)
+                </Button>
+                <Button
+                  type="button"
+                  variant={!isStocked ? "default" : "outline"}
+                  onClick={() => setIsStocked(false)}
+                  className="flex-1 h-14 text-base font-bold tracking-wider transition-all"
+                >
+                  EMPTY (0)
+                </Button>
+              </div>
             </div>
           </div>
         </div>

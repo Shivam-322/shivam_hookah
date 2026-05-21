@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, deleteDoc, doc, updateDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { getIdToken } from "firebase/auth";
 import { Product } from "@/components/ProductCard";
@@ -60,6 +60,17 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleToggleStock = async (id: string, currentStock: number) => {
+    const newStock = currentStock > 0 ? 0 : 100;
+    try {
+      await updateDoc(doc(db, "products", id), { stock: newStock });
+      setProducts(products.map(p => p.id === id ? { ...p, stock: newStock } : p));
+      toast.success(`Stock updated to ${newStock > 0 ? "Stocked (100)" : "Empty (0)"}`);
+    } catch (error) {
+      toast.error("Failed to update stock");
+    }
+  };
+
   if (loading) return <div className="text-muted-foreground animate-pulse">Loading products...</div>;
 
   return (
@@ -94,9 +105,19 @@ export default function AdminProductsPage() {
                   <TableCell className="capitalize text-muted-foreground">{product.category}</TableCell>
                   <TableCell className="font-bold text-primary">₹{product.price.toLocaleString("en-IN")}</TableCell>
                   <TableCell>
-                    <span className={product.stock > 0 ? "text-green-500 font-bold" : "text-destructive font-bold"}>
-                      {product.stock}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className={`inline-block min-w-[90px] font-bold ${product.stock > 0 ? "text-green-500" : "text-destructive"}`}>
+                        {product.stock > 0 ? `Stocked (${product.stock})` : "Empty (0)"}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleToggleStock(product.id, product.stock)}
+                        className="h-8 px-3 text-[10px] uppercase tracking-wider font-bold border-primary/20 hover:border-primary hover:bg-primary/10 transition-colors"
+                      >
+                        {product.stock > 0 ? "Set Empty" : "Set Stocked"}
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/20" onClick={() => handleDelete(product.id)}>
